@@ -20,7 +20,9 @@ export const SolarAligner: React.FC = () => {
 
   const normalizeHeading = (angle: number) => ((angle % 360) + 360) % 360;
   const effectiveHeading = normalizeHeading(
-    headingOffset === null ? sensorData.heading : sensorData.heading - headingOffset,
+    headingOffset === null
+      ? sensorData.heading
+      : sensorData.heading - headingOffset,
   );
 
   const handleCalibrate = () => {
@@ -69,7 +71,13 @@ export const SolarAligner: React.FC = () => {
   }, [effectiveHeading, sensorData.pitch, targetAzimuth, targetElevation]);
 
   return (
-    <div className="h-dvh overflow-hidden bg-gradient-to-b from-sky-100 via-indigo-50 to-amber-100 px-3 py-2 text-slate-900">
+    <div
+      className="h-dvh box-border overflow-hidden bg-gradient-to-b from-sky-100 via-indigo-50 to-amber-100 px-3 text-slate-900"
+      style={{
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.5rem)",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
+      }}
+    >
       <div className="mx-auto h-full w-full max-w-[560px] grid grid-rows-[auto_1fr_auto] gap-2">
         <section className="rounded-2xl bg-white/85 border border-sky-200 shadow-sm px-1 py-2">
           <DurationSlider
