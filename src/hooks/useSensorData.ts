@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SensorData {
   heading: number; // 0-360 Grad Kompass
@@ -14,7 +14,55 @@ interface SensorError {
   message: string;
 }
 
+type OrientationEventWithCompass = DeviceOrientationEvent & {
+  webkitCompassHeading?: number;
+};
+
+const normalizeHeading = (angle: number) => ((angle % 360) + 360) % 360;
+
+const getScreenOrientationAngle = () => {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  if (typeof window.screen?.orientation?.angle === "number") {
+    return window.screen.orientation.angle;
+  }
+
+  const fallback = (window as Window & { orientation?: number }).orientation;
+  return typeof fallback === "number" ? fallback : 0;
+};
+
+const getHeadingFromEvent = (
+  event: OrientationEventWithCompass,
+): number | null => {
+  if (
+    typeof event.webkitCompassHeading === "number" &&
+    Number.isFinite(event.webkitCompassHeading)
+  ) {
+    return normalizeHeading(event.webkitCompassHeading);
+  }
+
+  if (typeof event.alpha !== "number" || !Number.isFinite(event.alpha)) {
+    return null;
+  }
+
+  const screenAngle = getScreenOrientationAngle();
+  let heading = event.alpha;
+
+  if (screenAngle === 90) {
+    heading -= 90;
+  } else if (screenAngle === -90 || screenAngle === 270) {
+    heading += 90;
+  } else if (screenAngle === 180 || screenAngle === -180) {
+    heading += 180;
+  }
+
+  return normalizeHeading(heading);
+};
+
 export const useSensorData = () => {
+  const hasAbsoluteHeading = useRef(false);
   const [sensorData, setSensorData] = useState<SensorData>({
     heading: 0,
     pitch: 0,
@@ -36,13 +84,45 @@ export const useSensorData = () => {
       return;
     }
 
-    const handleOrientation = (event: DeviceOrientationEvent) => {
+    const handleOrientation = (
+      rawEvent: DeviceOrientationEvent,
+      isAbsolute: boolean,
+    ) => {
+      const event = rawEvent as OrientationEventWithCompass;
+      const heading = getHeadingFromEvent(event);
+
+      if (heading === null) {
+        return;
+      }
+
+      if (isAbsolute) {
+        hasAbsoluteHeading.current = true;
+      }
+
+      // Sobald absolute Werte vorhanden sind, relative Werte ignorieren.
+      if (!isAbsolute && hasAbsoluteHeading.current) {
+        return;
+      }
+
       setSensorData((prev) => ({
         ...prev,
-        heading: Math.round(event.alpha || 0), // 0-360
-        pitch: Math.round(event.beta || 0), // -90 bis 90
-        roll: Math.round(event.gamma || 0), // -180 bis 180
+        heading,
+        pitch: typeof event.beta === "number" ? event.beta : prev.pitch,
+        roll: typeof event.gamma === "number" ? event.gamma : prev.roll,
       }));
+    };
+
+    const onAbsoluteOrientation = (event: DeviceOrientationEvent) => {
+      handleOrientation(event, true);
+    };
+
+    const onOrientation = (event: DeviceOrientationEvent) => {
+      handleOrientation(event, false);
+    };
+
+    const attachOrientationListeners = () => {
+      window.addEventListener("deviceorientationabsolute", onAbsoluteOrientation);
+      window.addEventListener("deviceorientation", onOrientation);
     };
 
     // Check permission (iOS 13+)
@@ -53,7 +133,7 @@ export const useSensorData = () => {
         .requestPermission()
         .then((permission: string) => {
           if (permission === "granted") {
-            window.addEventListener("deviceorientation", handleOrientation);
+            attachOrientationListeners();
           } else {
             setError({
               type: "permission",
@@ -69,11 +149,12 @@ export const useSensorData = () => {
         });
     } else {
       // Android oder andere Browser
-      window.addEventListener("deviceorientation", handleOrientation);
+      attachOrientationListeners();
     }
 
     return () => {
-      window.removeEventListener("deviceorientation", handleOrientation);
+      window.removeEventListener("deviceorientationabsolute", onAbsoluteOrientation);
+      window.removeEventListener("deviceorientation", onOrientation);
     };
   }, []);
 
