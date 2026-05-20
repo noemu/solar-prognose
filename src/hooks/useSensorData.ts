@@ -121,7 +121,10 @@ export const useSensorData = () => {
     };
 
     const attachOrientationListeners = () => {
-      window.addEventListener("deviceorientationabsolute", onAbsoluteOrientation);
+      window.addEventListener(
+        "deviceorientationabsolute",
+        onAbsoluteOrientation,
+      );
       window.addEventListener("deviceorientation", onOrientation);
     };
 
@@ -153,7 +156,10 @@ export const useSensorData = () => {
     }
 
     return () => {
-      window.removeEventListener("deviceorientationabsolute", onAbsoluteOrientation);
+      window.removeEventListener(
+        "deviceorientationabsolute",
+        onAbsoluteOrientation,
+      );
       window.removeEventListener("deviceorientation", onOrientation);
     };
   }, []);
