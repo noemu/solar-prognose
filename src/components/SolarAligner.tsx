@@ -144,9 +144,9 @@ export const SolarAligner: React.FC = () => {
               ? "..."
               : !canCalibrate
                 ? "Kompass: Ohne Magnetdaten (nur IMU)"
-              : headingOffset === null
-                ? `Kompass: Sensor (${headingSource})`
-                : `Kompass: Kalibriert auf Magnet (${headingSource})`}
+                : headingOffset === null
+                  ? `Kompass: Sensor (${headingSource})`
+                  : `Kompass: Kalibriert auf Magnet (${headingSource})`}
         </div>
       </div>
     </div>
