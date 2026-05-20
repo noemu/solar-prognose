@@ -1,0 +1,58 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "🚀 Launch Chrome",
+      "configurations": ["viteDevServer", "launchChrome"]
+    },
+    {
+      "name": "🚀 Launch Firefox",
+      "configurations": ["viteDevServer", "launchFirefox"]
+    },
+    {
+      "name": "🔗 Attach to Chrome",
+      "configurations": ["viteDevServer", "attachChrome"]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "viteDevServer",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "dev"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "launchChrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true
+    },
+    {
+      "name": "attachChrome",
+      "type": "chrome",
+      "request": "attach",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true
+    },
+    // Make sure to install the Debugger for Firefox extension and set the path to your Firefox executable in the user settings
+    // "firefox.executable": "C:\\Users\\<username>\\AppData\\Local\\Mozilla Firefox\\firefox.exe"
+    {
+      "name": "launchFirefox",
+      "type": "firefox",
+      "request": "launch",
+      // If there is an error message on start, open firefox and navigate to "about:profiles" and create a new profile with the name below
+      "profile": "debug-profile",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/src",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

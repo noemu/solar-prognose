@@ -1,0 +1,21 @@
+{
+  "name": "Solar Align - PV Modul Ausrichtung",
+  "short_name": "Solar Align",
+  "description": "Richte dein PV-Modul mit deinem Handy aus. GPS, Kompass und Sensor-gesteuert.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "theme_color": "#1a1a2e",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><circle cx='96' cy='96' r='60' fill='%23fbbf24'/><path d='M96 60L110 85H82Z' fill='%231a1a2e'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "permissions": ["geolocation", "magnetometer"],
+  "prefer_related_applications": false
+}
