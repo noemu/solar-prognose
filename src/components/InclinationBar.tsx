@@ -47,7 +47,7 @@ export const InclinationBar: React.FC<InclinationBarProps> = ({
         </div>
 
         <div
-          className="absolute left-1 right-1 transition-all duration-200"
+          className="absolute left-1 right-1 transition-[bottom] duration-75"
           style={{ bottom: `${currentPercentInBox}%` }}
         >
           <div className="flex items-center">

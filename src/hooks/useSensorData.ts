@@ -29,6 +29,9 @@ type OrientationEventWithCompass = DeviceOrientationEvent & {
 
 const normalizeHeading = (angle: number) => ((angle % 360) + 360) % 360;
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 const getScreenOrientationAngle = () => {
   if (typeof window === "undefined") {
     return 0;
@@ -60,7 +63,9 @@ const getHeadingFromEvent = (
   }
 
   const screenAngle = getScreenOrientationAngle();
-  let heading = event.alpha;
+  // alpha laeuft in die entgegengesetzte Richtung zu einem klassischen Kompass.
+  // Deshalb wird fuer den Fallback 360 - alpha verwendet.
+  let heading = 360 - event.alpha;
 
   if (screenAngle === 90) {
     heading -= 90;
@@ -71,6 +76,27 @@ const getHeadingFromEvent = (
   }
 
   return { heading: normalizeHeading(heading), usedWebkit: false };
+};
+
+const getInclinationFromEvent = (
+  event: DeviceOrientationEvent,
+): number | null => {
+  if (
+    typeof event.beta !== "number" ||
+    !Number.isFinite(event.beta) ||
+    typeof event.gamma !== "number" ||
+    !Number.isFinite(event.gamma)
+  ) {
+    return null;
+  }
+
+  const betaRad = (event.beta * Math.PI) / 180;
+  const gammaRad = (event.gamma * Math.PI) / 180;
+  const cosTilt = Math.cos(betaRad) * Math.cos(gammaRad);
+  const tilt = (Math.acos(clamp(cosTilt, -1, 1)) * 180) / Math.PI;
+
+  // Spiegelung fuer face-up/face-down, damit der Wert stabil in 0..90 bleibt.
+  return clamp(Math.min(tilt, 180 - tilt), 0, 90);
 };
 
 export const useSensorData = () => {
@@ -97,6 +123,7 @@ export const useSensorData = () => {
   ) => {
     const event = rawEvent as OrientationEventWithCompass;
     const result = getHeadingFromEvent(event);
+    const inclination = getInclinationFromEvent(event);
 
     if (result === null) {
       return;
@@ -127,7 +154,7 @@ export const useSensorData = () => {
       magneticHeading: hasMagneticReference
         ? result.heading
         : prev.magneticHeading,
-      pitch: typeof event.beta === "number" ? event.beta : prev.pitch,
+      pitch: inclination ?? prev.pitch,
       roll: typeof event.gamma === "number" ? event.gamma : prev.roll,
       rawAlpha: typeof event.alpha === "number" ? event.alpha : prev.rawAlpha,
     }));
