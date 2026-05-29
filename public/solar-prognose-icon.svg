@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Solar Prognose Icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="curve" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#22c55e" />
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="56" fill="url(#bg)" />
+
+  <g opacity="0.95">
+    <circle cx="78" cy="78" r="30" fill="url(#sun)" />
+    <g stroke="#fbbf24" stroke-linecap="round" stroke-width="8">
+      <path d="M78 22v18" />
+      <path d="M78 116v18" />
+      <path d="M22 78h18" />
+      <path d="M116 78h18" />
+      <path d="M39 39l13 13" />
+      <path d="M104 104l13 13" />
+      <path d="M39 117l13-13" />
+      <path d="M104 52l13-13" />
+    </g>
+  </g>
+
+  <g opacity="0.28" stroke="#93c5fd" stroke-width="4">
+    <path d="M40 178h176" />
+    <path d="M40 146h176" />
+    <path d="M40 210h176" />
+  </g>
+
+  <path
+    d="M42 191C76 191 83 118 128 118C173 118 180 191 214 191"
+    fill="none"
+    stroke="url(#curve)"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="18"
+  />
+
+  <g fill="#e0f2fe" stroke="#082f49" stroke-width="6">
+    <circle cx="82" cy="159" r="9" />
+    <circle cx="128" cy="118" r="9" />
+    <circle cx="174" cy="159" r="9" />
+  </g>
+</svg>
