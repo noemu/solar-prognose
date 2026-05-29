@@ -2,22 +2,17 @@ import React from "react";
 
 interface InclinationBarProps {
   currentPitch: number; // Aktuelle Neigung (-90 bis 90)
-  targetElevation: number; // Zielneigung (0-90)
 }
 
 export const InclinationBar: React.FC<InclinationBarProps> = ({
   currentPitch,
-  targetElevation,
 }) => {
   // Für PV ist nur 0..90° relevant.
   const clampedCurrent = Math.max(0, Math.min(90, Math.abs(currentPitch)));
-  const clampedTarget = Math.max(0, Math.min(90, targetElevation));
 
   // 0° unten, 90° oben
   const currentPercent = (clampedCurrent / 90) * 100;
-  const targetPercent = (clampedTarget / 90) * 100;
   const currentPercentInBox = Math.max(2, Math.min(98, currentPercent));
-  const targetPercentInBox = Math.max(8, Math.min(92, targetPercent));
 
   return (
     <div className="h-full w-full flex items-stretch gap-2">
@@ -36,15 +31,6 @@ export const InclinationBar: React.FC<InclinationBarProps> = ({
             style={{ top: `${(i * 100) / 9}%` }}
           />
         ))}
-
-        <div
-          className="absolute left-1/2 -translate-x-1/2 w-full flex items-center justify-center transition-all duration-200"
-          style={{ bottom: `${targetPercentInBox}%` }}
-        >
-          <div className="w-7 h-7 rounded-full bg-amber-300 border-2 border-amber-700 flex items-center justify-center text-[10px] shadow">
-            ☀️
-          </div>
-        </div>
 
         <div
           className="absolute left-1 right-1 transition-[bottom] duration-75"

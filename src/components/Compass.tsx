@@ -4,12 +4,16 @@ interface CompassProps {
   currentHeading: number;
   targetAzimuth: number;
   isAccurate: boolean;
+  showTarget?: boolean;
+  sizeClassName?: string;
 }
 
 export const Compass: React.FC<CompassProps> = ({
   currentHeading,
   targetAzimuth,
   isAccurate,
+  showTarget = true,
+  sizeClassName = "max-w-[clamp(170px,58vw,300px)]",
 }) => {
   const size = 220;
   const center = size / 2;
@@ -24,7 +28,9 @@ export const Compass: React.FC<CompassProps> = ({
   const dialRotation = -currentHeading;
 
   return (
-    <div className="w-full max-w-[clamp(170px,58vw,300px)] aspect-square flex items-center justify-center">
+    <div
+      className={`w-full ${sizeClassName} aspect-square flex items-center justify-center`}
+    >
       <svg
         width="100%"
         height="100%"
@@ -95,23 +101,27 @@ export const Compass: React.FC<CompassProps> = ({
             W
           </text>
 
-          <circle
-            cx={targetX}
-            cy={targetY}
-            r="8"
-            fill="#fbbf24"
-            stroke="#b45309"
-            strokeWidth="2"
-          />
-          <circle
-            cx={targetX}
-            cy={targetY}
-            r="14"
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="1"
-            opacity="0.45"
-          />
+          {showTarget && (
+            <>
+              <circle
+                cx={targetX}
+                cy={targetY}
+                r="8"
+                fill="#fbbf24"
+                stroke="#b45309"
+                strokeWidth="2"
+              />
+              <circle
+                cx={targetX}
+                cy={targetY}
+                r="14"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="1"
+                opacity="0.45"
+              />
+            </>
+          )}
         </g>
 
         <line
