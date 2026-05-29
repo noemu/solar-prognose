@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Compass } from "./Compass";
 import { InclinationBar } from "./InclinationBar";
 import { ForecastChart } from "./ForecastChart";
@@ -66,6 +66,8 @@ export const SolarAligner: React.FC = () => {
   const { sensorData, requestOrientationPermission, permissionRequired } =
     useSensorData();
   const { wPeak, efficiency, setWPeak, setEfficiency } = useSolarConfigStore();
+  const [wPeakInput, setWPeakInput] = useState(() => `${wPeak}`);
+  const [efficiencyInput, setEfficiencyInput] = useState(() => `${efficiency}`);
   const [forecastsByDate, setForecastsByDate] = useState<
     Record<string, SolarForecastResult>
   >({});
@@ -73,6 +75,8 @@ export const SolarAligner: React.FC = () => {
   const [forecastError, setForecastError] = useState<string | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [headingOffset, setHeadingOffset] = useState<number | null>(null);
+  const forecastSectionRef = useRef<HTMLElement | null>(null);
+  const pendingForecastScrollRef = useRef(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() =>
     toStartOfDay(new Date()),
   );
@@ -98,6 +102,31 @@ export const SolarAligner: React.FC = () => {
   const canGoNextDate =
     selectedLoadedIndex >= 0 && selectedLoadedIndex < loadedDateKeys.length - 1;
 
+  useEffect(() => {
+    setWPeakInput(`${wPeak}`);
+  }, [wPeak]);
+
+  useEffect(() => {
+    setEfficiencyInput(`${efficiency}`);
+  }, [efficiency]);
+
+  useEffect(() => {
+    if (!pendingForecastScrollRef.current) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      forecastSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    if (!isLoadingForecast) {
+      pendingForecastScrollRef.current = false;
+    }
+  }, [forecastError, currentForecast, isLoadingForecast]);
+
   const handleCalibrate = () => {
     if (!canCalibrate || calibrationBaseHeading === null) {
       return;
@@ -111,6 +140,8 @@ export const SolarAligner: React.FC = () => {
   };
 
   const handleLoadForecast = async () => {
+    pendingForecastScrollRef.current = true;
+
     if (sensorData.latitude === null || sensorData.longitude === null) {
       setForecastError("GPS-Position ist noch nicht verfuegbar.");
       return;
@@ -164,9 +195,40 @@ export const SolarAligner: React.FC = () => {
   const updateNumericValue = (
     rawValue: string,
     setter: (value: number) => void,
+    inputSetter: (value: string) => void,
   ) => {
+    inputSetter(rawValue);
+
+    if (rawValue === "") {
+      return;
+    }
+
     const nextValue = Number(rawValue);
-    setter(Number.isFinite(nextValue) ? nextValue : 0);
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+
+    setter(nextValue);
+  };
+
+  const commitNumericValue = (
+    rawValue: string,
+    fallbackValue: number,
+    setter: (value: number) => void,
+    inputSetter: (value: string) => void,
+  ) => {
+    if (rawValue === "") {
+      inputSetter(`${fallbackValue}`);
+      return;
+    }
+
+    const nextValue = Number(rawValue);
+    if (!Number.isFinite(nextValue)) {
+      inputSetter(`${fallbackValue}`);
+      return;
+    }
+
+    setter(nextValue);
   };
 
   const handlePreviousDate = () => {
@@ -219,9 +281,16 @@ export const SolarAligner: React.FC = () => {
                 type="number"
                 min="10"
                 step="10"
-                value={wPeak}
+                value={wPeakInput}
                 onChange={(event) =>
-                  updateNumericValue(event.target.value, setWPeak)
+                  updateNumericValue(
+                    event.target.value,
+                    setWPeak,
+                    setWPeakInput,
+                  )
+                }
+                onBlur={() =>
+                  commitNumericValue(wPeakInput, wPeak, setWPeak, setWPeakInput)
                 }
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
               />
@@ -234,9 +303,21 @@ export const SolarAligner: React.FC = () => {
                 min="0"
                 max="100"
                 step="1"
-                value={efficiency}
+                value={efficiencyInput}
                 onChange={(event) =>
-                  updateNumericValue(event.target.value, setEfficiency)
+                  updateNumericValue(
+                    event.target.value,
+                    setEfficiency,
+                    setEfficiencyInput,
+                  )
+                }
+                onBlur={() =>
+                  commitNumericValue(
+                    efficiencyInput,
+                    efficiency,
+                    setEfficiency,
+                    setEfficiencyInput,
+                  )
                 }
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
               />
@@ -245,85 +326,91 @@ export const SolarAligner: React.FC = () => {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950">
-              Live-Ausrichtung
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Die Visualisierung zeigt die aktuell erfasste Richtung und Neigung
-              des Geraets.
-            </p>
+          <div className="flex flex-col gap-4">
+            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">
+                Live-Ausrichtung
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Die Visualisierung zeigt die aktuell erfasste Richtung und
+                Neigung des Geraets.
+              </p>
 
-            <div className="mt-5 grid items-center gap-3 grid-cols-[106px_minmax(0,1fr)] sm:gap-4">
-              <div className="flex flex-col items-center gap-2">
-                <div className={`${LIVE_INCLINATION_HEIGHT_CLASS} w-full`}>
-                  <InclinationBar currentPitch={sensorData.pitch} />
+              <div className="mt-5 grid items-center gap-3 grid-cols-[106px_minmax(0,1fr)] sm:gap-4">
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`${LIVE_INCLINATION_HEIGHT_CLASS} w-full`}>
+                    <InclinationBar currentPitch={sensorData.pitch} />
+                  </div>
+                  <div className="text-sm font-medium text-slate-600">
+                    {formatNumber(currentTilt, "deg")}
+                  </div>
                 </div>
-                <div className="text-sm font-medium text-slate-600">
-                  {formatNumber(currentTilt, "deg")}
+
+                <div className="flex min-w-0 flex-col items-center justify-center gap-3">
+                  <Compass
+                    currentHeading={deviceHeading}
+                    targetAzimuth={0}
+                    isAccurate={false}
+                    showTarget={false}
+                    sizeClassName={LIVE_COMPASS_SIZE_CLASS}
+                  />
+                  <div className="text-sm font-medium text-slate-600">
+                    {formatNumber(deviceHeading, "deg")}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-col items-center justify-center gap-3">
-                <Compass
-                  currentHeading={deviceHeading}
-                  targetAzimuth={0}
-                  isAccurate={false}
-                  showTarget={false}
-                  sizeClassName={LIVE_COMPASS_SIZE_CLASS}
-                />
-                <div className="text-sm font-medium text-slate-600">
-                  {formatNumber(deviceHeading, "deg")}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleLoadForecast}
-                disabled={
-                  isLoadingForecast ||
-                  selectedDate < minAvailableDate ||
-                  selectedDate > maxAvailableDate ||
-                  sensorData.latitude === null ||
-                  sensorData.longitude === null
-                }
-                className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {isLoadingForecast
-                  ? "Prognose wird geladen..."
-                  : "Prognose berechnen (3 Tage)"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCalibrate}
-                disabled={!canCalibrate}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Kompass kalibrieren
-              </button>
-              <button
-                type="button"
-                onClick={handleResetCalibration}
-                disabled={headingOffset === null}
-                className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Kalibrierung loeschen
-              </button>
-              {permissionRequired && (
+              <div className="mt-5 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => void requestOrientationPermission()}
-                  className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
+                  onClick={handleCalibrate}
+                  disabled={!canCalibrate}
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  Sensoren aktivieren
+                  Kompass kalibrieren
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={handleResetCalibration}
+                  disabled={headingOffset === null}
+                  className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Kalibrierung loeschen
+                </button>
+                {permissionRequired && (
+                  <button
+                    type="button"
+                    onClick={() => void requestOrientationPermission()}
+                    className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
+                  >
+                    Sensoren aktivieren
+                  </button>
+                )}
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleLoadForecast}
+              disabled={
+                isLoadingForecast ||
+                selectedDate < minAvailableDate ||
+                selectedDate > maxAvailableDate ||
+                sensorData.latitude === null ||
+                sensorData.longitude === null
+              }
+              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              {isLoadingForecast
+                ? "Prognose wird geladen..."
+                : "Prognose berechnen (3 Tage)"}
+            </button>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <section
+            ref={forecastSectionRef}
+            className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm"
+          >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">
@@ -394,7 +481,7 @@ export const SolarAligner: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+          </section>
         </section>
       </div>
     </div>

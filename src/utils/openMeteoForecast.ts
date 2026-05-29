@@ -71,6 +71,14 @@ const toTimestamp = (value: string | undefined) => {
   return Number.isNaN(timestamp) ? null : timestamp;
 };
 
+const isSameLocalDay = (left: Date, right: Date) => {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+};
+
 const normalizeSignedAngle = (angle: number) => {
   const normalized = ((((angle + 180) % 360) + 360) % 360) - 180;
   return normalized === -180 ? 180 : normalized;
@@ -195,12 +203,25 @@ export const fetchSolarForecast = async ({
     return bestIndex;
   }, 0);
   const currentPoint = points[currentIndex] ?? points[0];
+  const isTodayForecast = points.some((point) => {
+    const pointTime = new Date(point.time);
+    return !Number.isNaN(pointTime.getTime()) && isSameLocalDay(pointTime, now);
+  });
+  const energyPoints = isTodayForecast
+    ? points.filter((point) => {
+        const pointTime = new Date(point.time);
+        return (
+          !Number.isNaN(pointTime.getTime()) &&
+          pointTime.getTime() >= now.getTime()
+        );
+      })
+    : points;
 
   return {
     timezone: payload.timezone ?? "auto",
     points,
     totalEnergyWh: round(
-      points.reduce((sum, point) => sum + point.energyWh, 0),
+      energyPoints.reduce((sum, point) => sum + point.energyWh, 0),
       1,
     ),
     peakPowerW: round(
