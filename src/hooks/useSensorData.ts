@@ -113,8 +113,6 @@ const getInclinationFromEvent = (
 
 export const useSensorData = () => {
   const hasAbsoluteHeading = useRef(false);
-  const pendingOrientationSample = useRef<OrientationSample | null>(null);
-  const orientationRafId = useRef<number | null>(null);
   const lastOrientationFrameAt = useRef<number>(0);
   const [permissionRequired, setPermissionRequired] = useState(false);
   const [sensorData, setSensorData] = useState<SensorData>({
@@ -132,6 +130,12 @@ export const useSensorData = () => {
   const [isReady, setIsReady] = useState(false);
 
   const applyOrientationSample = (sample: OrientationSample) => {
+    const now = performance.now();
+    if (now - lastOrientationFrameAt.current < ORIENTATION_FRAME_INTERVAL_MS) {
+      return;
+    }
+    lastOrientationFrameAt.current = now;
+
     const hasHeading = sample.heading !== null;
 
     if (sample.isAbsolute && hasHeading) {
@@ -167,45 +171,6 @@ export const useSensorData = () => {
     }));
   };
 
-  const flushOrientationSample = (now: number) => {
-    if (now - lastOrientationFrameAt.current < ORIENTATION_FRAME_INTERVAL_MS) {
-      return;
-    }
-
-    const sample = pendingOrientationSample.current;
-    if (sample === null) {
-      return;
-    }
-
-    pendingOrientationSample.current = null;
-    lastOrientationFrameAt.current = now;
-    applyOrientationSample(sample);
-  };
-
-  const orientationLoop = (now: number) => {
-    flushOrientationSample(now);
-    orientationRafId.current = window.requestAnimationFrame(orientationLoop);
-  };
-
-  const startOrientationLoop = () => {
-    if (orientationRafId.current !== null) {
-      return;
-    }
-
-    lastOrientationFrameAt.current = 0;
-    orientationRafId.current = window.requestAnimationFrame(orientationLoop);
-  };
-
-  const stopOrientationLoop = () => {
-    if (orientationRafId.current === null) {
-      return;
-    }
-
-    window.cancelAnimationFrame(orientationRafId.current);
-    orientationRafId.current = null;
-    pendingOrientationSample.current = null;
-  };
-
   const captureOrientationSample = (
     rawEvent: DeviceOrientationEvent,
     isAbsolute: boolean,
@@ -213,7 +178,7 @@ export const useSensorData = () => {
     const event = rawEvent as OrientationEventWithCompass;
     const result = getHeadingFromEvent(event);
 
-    pendingOrientationSample.current = {
+    const sample = {
       isAbsolute,
       heading: result?.heading ?? null,
       usedWebkit: result?.usedWebkit ?? false,
@@ -227,6 +192,8 @@ export const useSensorData = () => {
           ? event.alpha
           : null,
     };
+
+    applyOrientationSample(sample);
   };
 
   const onAbsoluteOrientation = (event: DeviceOrientationEvent) => {
@@ -238,7 +205,6 @@ export const useSensorData = () => {
   };
 
   const attachOrientationListeners = () => {
-    startOrientationLoop();
     window.addEventListener("deviceorientationabsolute", onAbsoluteOrientation);
     window.addEventListener("deviceorientation", onOrientation);
   };
@@ -249,7 +215,6 @@ export const useSensorData = () => {
       onAbsoluteOrientation,
     );
     window.removeEventListener("deviceorientation", onOrientation);
-    stopOrientationLoop();
   };
 
   useEffect(() => {
