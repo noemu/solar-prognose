@@ -2,7 +2,7 @@ import React from "react";
 
 interface CompassProps {
   currentHeading: number;
-  targetAzimuth: number;
+  targetAzimuth?: number;
   isAccurate: boolean;
   showTarget?: boolean;
   sizeClassName?: string;
@@ -10,19 +10,12 @@ interface CompassProps {
 
 export const Compass: React.FC<CompassProps> = ({
   currentHeading,
-  targetAzimuth,
   isAccurate,
-  showTarget = true,
   sizeClassName = "max-w-[clamp(170px,58vw,300px)]",
 }) => {
   const size = 220;
   const center = size / 2;
   const radius = size / 2 - 18;
-
-  // Zielposition auf der rotierenden Scheibe
-  const targetAngle = (targetAzimuth * Math.PI) / 180;
-  const targetX = center + (radius - 14) * Math.sin(targetAngle);
-  const targetY = center - (radius - 14) * Math.cos(targetAngle);
 
   // Die Scheibe muss entgegengesetzt zur Geraete-Drehung rotieren.
   const dialRotation = -currentHeading;
@@ -100,28 +93,6 @@ export const Compass: React.FC<CompassProps> = ({
           >
             W
           </text>
-
-          {showTarget && (
-            <>
-              <circle
-                cx={targetX}
-                cy={targetY}
-                r="8"
-                fill="#fbbf24"
-                stroke="#b45309"
-                strokeWidth="2"
-              />
-              <circle
-                cx={targetX}
-                cy={targetY}
-                r="14"
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="1"
-                opacity="0.45"
-              />
-            </>
-          )}
         </g>
 
         <line

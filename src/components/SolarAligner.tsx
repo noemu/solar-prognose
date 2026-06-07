@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Compass } from "./Compass";
-import { InclinationBar } from "./InclinationBar";
+import { LiveAlignmentPreview } from "./LiveAlignmentPreview";
 import { ForecastChart } from "./ForecastChart";
 import { useSensorData } from "../hooks/useSensorData";
 import {
@@ -9,7 +8,6 @@ import {
   toPanelTilt,
   type SolarForecastResult,
 } from "../utils/openMeteoForecast";
-import { useSolarConfigStore } from "../store/useSolarConfigStore";
 
 const normalizeHeading = (angle: number) => ((angle % 360) + 360) % 360;
 
@@ -45,8 +43,6 @@ const formatDateLabel = (date: Date) =>
   });
 
 const PANEL_HEADING_OFFSET = 180;
-const LIVE_COMPASS_SIZE_CLASS = "max-w-[clamp(120px,42vw,220px)]";
-const LIVE_INCLINATION_HEIGHT_CLASS = "h-[clamp(120px,42vw,220px)]";
 const OPEN_METEO_MAX_PAST_DAYS = 92;
 const OPEN_METEO_MAX_FUTURE_DAYS = 15;
 
@@ -65,7 +61,8 @@ const StatCard: React.FC<{ label: string; value: string }> = ({
 export const SolarAligner: React.FC = () => {
   const { sensorData, requestOrientationPermission, permissionRequired } =
     useSensorData();
-  const { wPeak, efficiency, setWPeak, setEfficiency } = useSolarConfigStore();
+  const [wPeak, setWPeak] = useState(430);
+  const [efficiency, setEfficiency] = useState(85);
   const [wPeakInput, setWPeakInput] = useState(() => `${wPeak}`);
   const [efficiencyInput, setEfficiencyInput] = useState(() => `${efficiency}`);
   const [forecastsByDate, setForecastsByDate] = useState<
@@ -101,14 +98,6 @@ export const SolarAligner: React.FC = () => {
   const canGoPreviousDate = selectedLoadedIndex > 0;
   const canGoNextDate =
     selectedLoadedIndex >= 0 && selectedLoadedIndex < loadedDateKeys.length - 1;
-
-  useEffect(() => {
-    setWPeakInput(`${wPeak}`);
-  }, [wPeak]);
-
-  useEffect(() => {
-    setEfficiencyInput(`${efficiency}`);
-  }, [efficiency]);
 
   useEffect(() => {
     if (!pendingForecastScrollRef.current) {
@@ -255,14 +244,14 @@ export const SolarAligner: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(125,211,252,0.45),_transparent_35%),linear-gradient(180deg,_#f8fafc_0%,_#eff6ff_48%,_#fefce8_100%)] px-4 py-5 text-slate-900"
+      className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.45),transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eff6ff_48%,#fefce8_100%)] px-4 py-5 text-slate-900"
       style={{
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.5rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2rem)",
       }}
     >
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-        <section className="rounded-[28px] border border-sky-100 bg-white/90 p-5 shadow-sm">
+        <section className="rounded-3xl border border-sky-100 bg-white/90 p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-950">
@@ -336,36 +325,20 @@ export const SolarAligner: React.FC = () => {
                 Neigung des Geraets.
               </p>
 
-              <div className="mt-5 grid items-center gap-3 grid-cols-[106px_minmax(0,1fr)] sm:gap-4">
-                <div className="flex flex-col items-center gap-2">
-                  <div className={`${LIVE_INCLINATION_HEIGHT_CLASS} w-full`}>
-                    <InclinationBar currentPitch={sensorData.pitch} />
-                  </div>
-                  <div className="text-sm font-medium text-slate-600">
-                    {formatNumber(currentTilt, "deg")}
-                  </div>
-                </div>
-
-                <div className="flex min-w-0 flex-col items-center justify-center gap-3">
-                  <Compass
-                    currentHeading={deviceHeading}
-                    targetAzimuth={0}
-                    isAccurate={false}
-                    showTarget={false}
-                    sizeClassName={LIVE_COMPASS_SIZE_CLASS}
-                  />
-                  <div className="text-sm font-medium text-slate-600">
-                    {formatNumber(deviceHeading, "deg")}
-                  </div>
-                </div>
-              </div>
+              <LiveAlignmentPreview
+                currentPitch={sensorData.pitch}
+                currentHeading={deviceHeading}
+                isAccurate={false}
+                headingSuffix="deg"
+                pitchSuffix="deg"
+              />
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handleCalibrate}
                   disabled={!canCalibrate}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   Kompass kalibrieren
                 </button>
@@ -373,7 +346,7 @@ export const SolarAligner: React.FC = () => {
                   type="button"
                   onClick={handleResetCalibration}
                   disabled={headingOffset === null}
-                  className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   Kalibrierung loeschen
                 </button>
@@ -381,7 +354,7 @@ export const SolarAligner: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => void requestOrientationPermission()}
-                    className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
+                    className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
                   >
                     Sensoren aktivieren
                   </button>
@@ -409,7 +382,7 @@ export const SolarAligner: React.FC = () => {
 
           <section
             ref={forecastSectionRef}
-            className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm"
+            className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -465,7 +438,7 @@ export const SolarAligner: React.FC = () => {
                     type="button"
                     onClick={handlePreviousDate}
                     disabled={!canGoPreviousDate}
-                    className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     ◀
                   </button>
@@ -474,7 +447,7 @@ export const SolarAligner: React.FC = () => {
                     type="button"
                     onClick={handleNextDate}
                     disabled={!canGoNextDate}
-                    className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     ▶
                   </button>

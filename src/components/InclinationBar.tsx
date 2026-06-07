@@ -23,7 +23,7 @@ export const InclinationBar: React.FC<InclinationBarProps> = ({
         <span>0°</span>
       </div>
 
-      <div className="relative w-[84px] h-full min-h-0 rounded-lg border-2 border-slate-700 bg-slate-50 shadow-inner overflow-hidden">
+      <div className="relative w-21 h-full min-h-0 rounded-2xl border-2 border-slate-700 bg-slate-50 shadow-inner overflow-hidden">
         {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={`line-${i}`}
@@ -37,8 +37,8 @@ export const InclinationBar: React.FC<InclinationBarProps> = ({
           style={{ bottom: `${currentPercentInBox}%` }}
         >
           <div className="flex items-center">
-            <div className="w-0 h-0 border-y-[6px] border-y-transparent border-r-[10px] border-r-blue-700" />
-            <div className="h-[4px] flex-1 bg-blue-600 rounded-full" />
+            <div className="w-0 h-0 border-y-6 border-y-transparent border-r-10 border-r-blue-700" />
+            <div className="h-1 flex-1 bg-blue-600 rounded-full" />
           </div>
         </div>
       </div>

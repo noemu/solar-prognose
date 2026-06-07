@@ -179,12 +179,12 @@ export const DurationSlider: React.FC<DurationSliderProps> = ({
 
   return (
     <div className="w-full px-2 py-2">
-      <div className="mb-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-2 py-1.5 text-slate-900 shadow-sm">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/70 px-2 py-1.5 text-slate-900 shadow-sm">
         <button
           type="button"
           onClick={onPreviousDay}
           disabled={!canGoPreviousDay}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-lg font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
+          className="flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-300 bg-white text-lg font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
           aria-label="Vorheriger Tag"
         >
           ‹
@@ -197,7 +197,7 @@ export const DurationSlider: React.FC<DurationSliderProps> = ({
         <button
           type="button"
           onClick={onNextDay}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-lg font-bold text-slate-700"
+          className="flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-300 bg-white text-lg font-bold text-slate-700"
           aria-label="Nächster Tag"
         >
           ›
