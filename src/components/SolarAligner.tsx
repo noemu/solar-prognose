@@ -207,13 +207,11 @@ export const SolarAligner: React.FC = () => {
     inputSetter: (value: string) => void,
   ) => {
     if (rawValue === "") {
-      inputSetter(`${fallbackValue}`);
       return;
     }
 
     const nextValue = Number(rawValue);
     if (!Number.isFinite(nextValue)) {
-      inputSetter(`${fallbackValue}`);
       return;
     }
 

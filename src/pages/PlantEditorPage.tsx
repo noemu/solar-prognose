@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { LiveAlignmentPreview } from "../components/LiveAlignmentPreview";
 import { useSensorData } from "../hooks/useSensorData";
-import { usePlantStore } from "../store/usePlantStore";
+import { SolarPlant, usePlantStore } from "../store/usePlantStore";
 import {
   fetchSolarForecast,
   toOpenMeteoAzimuth,
@@ -27,10 +27,7 @@ export const PlantEditorPage: React.FC = () => {
     useSensorData();
   const { heading, pitch, latitude, longitude } = sensorData;
 
-  const plant = useMemo(
-    () => plants.find((item) => item.id === plantId) ?? null,
-    [plants, plantId],
-  );
+  const plant = useMemo<SolarPlant | null>(() => null, [plants, plantId]);
   const isEditing = plant !== null;
 
   const [name, setName] = useState(plant?.name ?? "");
@@ -63,26 +60,6 @@ export const PlantEditorPage: React.FC = () => {
   const currentTilt = toPanelTilt(pitch);
   const deviceHeading = heading;
 
-  useEffect(() => {
-    if (plant) {
-      setName(plant.name);
-      setTiltInput(plant.tilt.toString());
-      setAzimuthInput(plant.azimuth.toString());
-      setWPeakInput(plant.wPeak.toString());
-      setEfficiencyInput(plant.efficiency.toString());
-      setLatitudeValue(plant.latitude);
-      setLongitudeValue(plant.longitude);
-      return;
-    }
-
-    setTiltInput("30");
-    setAzimuthInput("180");
-    setWPeakInput("430");
-    setEfficiencyInput("85");
-    setLatitudeValue(latitude);
-    setLongitudeValue(longitude);
-  }, [plant, latitude, longitude]);
-
   const parseNumberValue = (value: string, fallback: number) => {
     if (value.trim() === "") {
       return fallback;
@@ -103,28 +80,18 @@ export const PlantEditorPage: React.FC = () => {
       return;
     }
 
-    const parsedTilt = Number(
-      tiltInput.trim() === "" ? NaN : Number(tiltInput),
-    );
-    const parsedAzimuth = Number(
-      azimuthInput.trim() === "" ? NaN : Number(azimuthInput),
-    );
-    const parsedWPeak = Number(
-      wPeakInput.trim() === "" ? NaN : Number(wPeakInput),
-    );
-    const parsedEfficiency = Number(
-      efficiencyInput.trim() === "" ? NaN : Number(efficiencyInput),
-    );
+    const fallbackTilt = plant?.tilt ?? 30;
+    const fallbackAzimuth = plant?.azimuth ?? 180;
+    const fallbackWPeak = plant?.wPeak ?? 430;
+    const fallbackEfficiency = plant?.efficiency ?? 85;
 
-    if (
-      !Number.isFinite(parsedTilt) ||
-      !Number.isFinite(parsedAzimuth) ||
-      !Number.isFinite(parsedWPeak) ||
-      !Number.isFinite(parsedEfficiency)
-    ) {
-      setForecastError("Bitte füllen Sie alle numerischen Felder korrekt aus.");
-      return;
-    }
+    const parsedTilt = parseNumberValue(tiltInput, fallbackTilt);
+    const parsedAzimuth = parseNumberValue(azimuthInput, fallbackAzimuth);
+    const parsedWPeak = parseNumberValue(wPeakInput, fallbackWPeak);
+    const parsedEfficiency = parseNumberValue(
+      efficiencyInput,
+      fallbackEfficiency,
+    );
 
     setIsCalculating(true);
     setForecastError(null);
